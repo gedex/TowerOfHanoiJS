@@ -1,6 +1,6 @@
 /**
  * TowerOfHanoi v0.1
- * JavaScript library to create Tower of Hanoi game[0].
+ * JavaScript code to create Tower of Hanoi game[0].
  *
  * Copyright (c) 2012 Akeda Bagus (admin@gedex.web.id).
  *
@@ -12,8 +12,8 @@
  * @todo : - Make class and id prefix customizeable.
  *         - Make source peg passable to Game constructor.
  *
- * This is not a jQuery plugin, but this library needs jQuery and jQuery UI
- * to run. Make sure jQuery and jQuery UI is loaded first before create 
+ * This code is not a jQuery plugin, but this code needs jQuery and jQuery UI
+ * to run. Make sure jQuery and jQuery UI are loaded first before create
  * the Game instance.
  *
  * [0] http://en.wikipedia.org/wiki/Tower_of_Hanoi
