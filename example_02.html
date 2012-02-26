@@ -1,0 +1,94 @@
+<html>
+<head>
+  <title>Tower of Hanoi Demonstration &mdash; Example 02</title>
+  <link href='http://fonts.googleapis.com/css?family=Chewy&text=Tower%20of%20Hanoi%20Game' rel='stylesheet' type='text/css'>
+  <link rel="stylesheet" type="text/css" href="css/TowerOfHanoi.min.css?v=0.1" />
+  <link rel="stylesheet" type="text/css" href="css/DemoPage.css?v=0.1" />
+</head>
+<body>
+<div class="demo-block" id="main">
+  <h1>Tower of Hanoi Game</h1>
+  <div id="game-container"></div>
+  <p id="step-information">
+    Your number of steps: <span id="step">0</span>.
+    Maximum steps to move from source peg to destination peg are <span id="max-step">0</span> steps.
+  </p>
+  <p>
+    <a id="pause" href="#">Pause</a> |
+    <a id="restart" href="#">Restart</a>
+  </p>
+</div>
+<div class="demo-block" id="footer">
+  <p>Copyright &copy; 2012 Akeda Bagus admin at gedex.web.id</p>
+</div>
+
+<script src="js/jquery-1.7.1.min.js"></script>
+<script src="js/jquery-ui.min.js"></script>
+<script src="js/TowerOfHanoi.min.js?v=0.1"></script>
+<script>
+jQuery(function() {
+  // Instantiate new game with numOfDiscs = 3.
+  var game = new Game({
+    numOfDiscs: 3,
+    // Callback after object game is initialized.
+    afterInit: function(g) {
+      jQuery('#max-step').text(g.maxSteps);
+    },
+    // Callback after steps is performed.
+    afterStep: function(g) {
+      var steps = g.getSteps();
+      jQuery('#step').text(steps);
+
+      setTimeout(function() {
+        if ( g.isWin() === 1 ) {
+          alert("You win!");
+          g.freeze();
+        } else if (steps >= g.getMaxSteps()) {
+          alert("Game over!");
+          g.freeze();
+        }
+      }, 200);
+    }
+  });
+
+  var stepInformation = jQuery('#step-information');
+  var stepInfoText;
+
+  // Callback can be given later to game object.
+  // Callback when the game is paused.
+  game.onPause = function(g) {
+    // Backups the step text.
+    stepInfoText = stepInformation.html();
+
+    // Replaces information step with pause information.
+    stepInformation.html('Game paused');
+
+    jQuery('#pause').text('Resume');
+  };
+
+  game.onResume = function(g) {
+    // Restores the steps information.
+    stepInformation.html(stepInfoText);
+    jQuery('#pause').text('Pause');
+  }
+
+  jQuery('#pause').click(function(e) {
+    if (game.state === 'playing') {
+      game.pause();
+    } else if (game.state === 'pause') {
+      game.resume();
+    }
+    e.preventDefault();
+  });
+
+  jQuery('#restart').click(function(e) {
+    game.restart();
+    jQuery('#max-step').text(game.maxSteps);
+    jQuery('#step').text(0);
+
+    e.preventDefault();
+  });
+});
+</script>
+</body>
+</html>
