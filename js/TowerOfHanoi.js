@@ -148,35 +148,44 @@ var Game = function(options) {
   // Callback afterInit
   this.afterInit = this.options.afterInit || function(_this) {};
 
-  // Creating pegs.
-  for (var i = 0; i < opt.numOfPegs; i++) {
+  this.createPegs();
+
+  // Source peg which all discs will be placed into.
+  var sourcePeg = this.pegs[0];
+
+  this.createDiscs(sourcePeg);
+
+  this.state = 'playing';
+  this.afterInit(_this);
+};
+
+// Create pegs.
+Game.prototype.createPegs = function() {
+  for (var i = 0; i < this.options.numOfPegs; i++) {
     this.pegs[i] = new Peg(i);
     this.container.append(this.pegs[i].getPegContainer());
 
     // Set height based on number of discs.
     this.pegs[i].getPeg().css({
-      'min-height': opt.discHeight*opt.numOfDiscs
+      'min-height': this.options.discHeight*this.options.numOfDiscs
     });
-
-    // Stylize destination peg.
-    if ((i + 1) === this.options.destinationPeg) {
-      this.pegs[i].getPeg().parent().addClass('peg-destination');
-    }
 
     this._bindDroppableToPeg(this.pegs[i]);
   }
+  // Stylize destination peg.
+  this.pegs[this.options.destinationPeg-1].
+    getPeg().parent().addClass('peg-destination');
+}
 
-  // Source peg which all discs will be placed into.
-  var sourcePeg = this.pegs[0];
-
-  // Creating discs and append it to the first peg.
-  var disc;
-  for (var i = 0; i < opt.numOfDiscs; i++) {
-    disc = new Disc({
+// Create discs. Peg object which all discs will be in must be
+// passed as argument.
+Game.prototype.createDiscs = function(sourcePeg) {
+  for (var i = 0; i < this.options.numOfDiscs; i++) {
+    var disc = new Disc({
       id: i+1,
-      width: opt.discMaxWidth - (opt.numOfDiscs-i)*20,
-      height: opt.discHeight,
-      margin: (opt.numOfDiscs-i)*10
+      width: this.options.discMaxWidth - (this.options.numOfDiscs-i)*20,
+      height: this.options.discHeight,
+      margin: (this.options.numOfDiscs-i)*10
     });
 
     // Binds draggable into disc.
@@ -184,30 +193,27 @@ var Game = function(options) {
 
     // Push into peg.
     // Since this is the first time populating peg
-    // with discs push MUST be directly called from
+    // with discs, push MUST be directly called from
     // discs property. Subsequent operation should
     // be using push from peg object.
     sourcePeg.discs.push(disc);
 
     // Append disc jQuery object into current peg.
     sourcePeg.getPeg().append(disc.getDisc());
-    disc.getDisc().css('top', i*opt.discHeight);
+    disc.getDisc().css('top', i*this.options.discHeight);
   }
 
   // Copy the height of peg with full stack,
-  // so other pegs have same weight.
+  // so other pegs have same height.
   var idealPegHeight = sourcePeg.getPeg().height();
-  for (var i = 1; i < opt.numOfPegs; i++) {
+  for (var i = 1; i < this.options.numOfPegs; i++) {
     this.pegs[i].getPeg().height(idealPegHeight);
   }
 
   // Enable top disc on first peg.
   var topDisc = sourcePeg.top().getDisc();
   topDisc.draggable('option', 'disabled', false).addClass('moveable');
-
-  this.state = 'playing';
-  this.afterInit(_this);
-};
+}
 
 // Bind droppable to peg.
 Game.prototype._bindDroppableToPeg = function (pegObj) {
@@ -400,56 +406,31 @@ Game.prototype.resume = function() {
 // Restart game from the start. It possible to start the game
 // with overriden options.
 Game.prototype.restart = function(options) {
-  options = options || {};
-  jQuery.extend(options, this.options);
-
-  // Recalculate minumum steps.
-  this.maxSteps = Math.pow(2, this.options.numOfDiscs) - 1;
-
   // Freeze the game.
   if (this.state !== 'freeze') {
     this.freeze();
   }
 
-  var sourcePeg = this.pegs[0];
-  var tmpPeg = [];
-
+  // remove all pegs and discs
   for (var i=0; i<this.options.numOfPegs; i++) {
     var peg = this.pegs[i];
-
-    // Bind droppable for the peg but not enabled yet.
-    this._bindDroppableToPeg(peg);
-    peg.getPeg().droppable('disable');
-
     while (peg.discs.length > 0) {
-      var disc = peg.pop();
-
-      // Bind draggable to the disc but not enabled yet.
-      this._bindDraggableToDisc(disc);
-      disc.getDisc().draggable('disable');
-
-      tmpPeg.push(disc);
+      peg.pop();
     }
   }
+  this.pegs = [];
+  this.container.html('');
 
-  // sort based on id of the peg
-  tmpPeg.sort(function(a, b) {
-    return a.id - b.id;
-  });
+  // Override options.
+  options = options || {};
+  jQuery.extend(this.options, options);
 
-  // Move sorted discs to source peg.
-  sourcePeg.discs = tmpPeg;
-  for (var i = 0; i < this.options.numOfDiscs; i++) {
-    sourcePeg.getPeg().prepend(sourcePeg.discs[i].getDisc());
-    sourcePeg.discs[i].getDisc().css('top', this.options.discHeight*i);
-  }
+  // Create new pegs and discs.
+  this.createPegs();
+  this.createDiscs(this.pegs[0]);
 
-  // Enable droppable to all pegs
-  for (var i = 0; i < this.options.numOfPegs; i++) {
-    this.pegs[i].getPeg().droppable('enable');
-  }
-  // Enable draggable to source peg's top disc.
-  sourcePeg.discs[0].getDisc().draggable('enable').addClass('moveable');
+  // Recalculate minumum steps.
+  this.maxSteps = Math.pow(2, this.options.numOfDiscs) - 1;
 
   // Restart internal states.
   this.steps = 0;
