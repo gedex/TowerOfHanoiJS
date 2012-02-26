@@ -82,7 +82,10 @@ jQuery(function() {
   });
 
   jQuery('#restart').click(function(e) {
+    if (game.state === 'pause') game.resume();
+
     game.restart();
+
     jQuery('#max-step').text(game.maxSteps);
     jQuery('#step').text(0);
 
